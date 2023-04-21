@@ -3,24 +3,30 @@ import { subDays, subHours } from "date-fns";
 import { Box, Container, Unstable_Grid2 as Grid } from "@mui/material";
 import { OverviewBudget } from "sections/overview/overview-budget";
 import { OverviewLatestOrders } from "sections/overview/overview-latest-orders";
-import { OverviewLatestProducts } from "sections/overview/overview-latest-products";
 import { OverviewSales } from "sections/overview/overview-sales";
 import { OverviewTasksProgress } from "sections/overview/overview-tasks-progress";
 import { OverviewTotalCustomers } from "sections/overview/overview-total-customers";
 import { OverviewTotalProfit } from "sections/overview/overview-total-profit";
-import { OverviewTraffic } from "sections/overview/overview-traffic";
+import { OverviewLatestProducts } from "sections/overview/overview-latest-products.js";
 import Stripe from "stripe";
 import Header from "@/components/Header";
 import { mongooseConnect } from "@/lib/mongoose";
+import { useSession } from "next-auth/react";
 
 const now = new Date();
 
 export async function getServerSideProps() {
   const stripe = new Stripe(process.env.STRIPE_SK);
+  const { User } = require("@/models/User");
+  const { Order } = require("@/models/Order");
+  const { Product } = require("@/models/Product");
+  const users = await User.find({}, null, { sort: { _id: -1 } });
+  const orders = await Order.find({}, null, { sort: { _id: -1 } });
+  const products = await Product.find({}, null, { sort: { _id: -1 } });
   await mongooseConnect();
-  // const balanceTransactions = await stripe.balanceTransactions.list({
-  //   limit: 3,
-  // });
+  const balanceTransactions = await stripe.balanceTransactions.list({
+    limit: 100,
+  });
 
   // const balance = await stripe.balance.retrieve();
   // const customers = await User.find({}, null, {
@@ -28,18 +34,132 @@ export async function getServerSideProps() {
   //   limit: 20,
   // });
 
-  console.log("HEREEEEEEEEEEEEEEEEEE");
+  // console.log("HEREEEEEEEEEEEEEEEEEE");
   // console.log(balanceTransactions);
   // console.log(balance);
   // console.log(customers);
+  const sellAmmounts = balanceTransactions.data.map(
+    (el) => el.amount / el.exchange_rate - el.fee
+  );
+  const totalProfit = sellAmmounts.reduce(
+    (accumulator, currentValue) => accumulator + currentValue,
+    0
+  );
+
+  const clientNumber = users.length;
+  const productsNumber = products.length;
+  let payStatistic = balanceTransactions.data.map((el) => {
+    return {
+      year: new Date(el.created * 1000).getFullYear(),
+      month: new Date(el.created * 1000).getMonth() + 1,
+      paidValue: Math.round(el.amount / el.exchange_rate - el.fee) / 100,
+    };
+  });
+
+  let monthlySales = new Array(12).fill(0);
+  for (let i = 0; i < payStatistic.length; i++) {
+    monthlySales[payStatistic[i].month] += payStatistic[i].paidValue;
+  }
+
+  monthlySales = monthlySales.map((el) => Math.round(el * 100) / 100);
+
+  let PaymentsAudit = [];
+  for (let i = 0; i < payStatistic.length; i++) {
+    const year = payStatistic[i].year;
+    const month = payStatistic[i].month;
+    let found = PaymentsAudit.find(
+      (el) => el.year == year && el.month == month
+    );
+    // console.log("HEREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+    // console.log(year, month, found, PaymentsAudit);
+
+    if (found) {
+      found.valTot += payStatistic[i].paidValue;
+      found.nrComenzi += 1;
+    } else {
+      PaymentsAudit.push({
+        year: year,
+        month: month,
+        valTot: payStatistic[i].paidValue,
+        nrComenzi: 1,
+      });
+    }
+  }
+
+  PaymentsAudit = PaymentsAudit.map((el) => {
+    return { ...el, valTot: Math.round(el.valTot * 100) / 100 };
+  });
+  PaymentsAudit.sort((a, b) => {
+    // a is less than b by some ordering criterion
+    if (a.year < b.year || (a.year == b.year && a.month < b.month)) {
+      return -1;
+    }
+    // a is greater than b by the ordering criterion
+    if (a.year > b.year || (a.year == b.year && a.month > b.month)) {
+      return 1;
+    }
+    // a must be equal to b
+    return 0;
+  });
+  const AuditProducts = [
+    {
+      numeProdus: "numero produs",
+      nrComenzi: "numero prod",
+      valTotala: 1290,
+    },
+  ];
   return {
     props: {
-      ASD: "value",
+      users: JSON.parse(JSON.stringify(users)),
+      orders: JSON.parse(JSON.stringify(orders)),
+      balanceTransactions: JSON.parse(JSON.stringify(balanceTransactions)),
+      totalProfit: JSON.parse(JSON.stringify(Math.round(totalProfit) / 100)),
+      clientNumber: JSON.parse(JSON.stringify(clientNumber)),
+      productsNumber: JSON.parse(JSON.stringify(productsNumber)),
+      monthlySales: JSON.parse(JSON.stringify(monthlySales)),
+      PaymentsAudit: JSON.parse(JSON.stringify(PaymentsAudit)),
+      AuditProducts: JSON.parse(JSON.stringify(AuditProducts)),
     },
   };
 }
 
-const dashboard = ({ ASD }) => {
+const dashboard = ({
+  users,
+  orders,
+  balanceTransactions,
+  totalProfit,
+  clientNumber,
+  productsNumber,
+  monthlySales,
+  PaymentsAudit,
+  AuditProducts,
+}) => {
+  // console.log(users);
+  // console.log(orders);
+  console.log(balanceTransactions);
+  // console.log();
+  const adminEmails = ["andrei.jerca00@e-uvt.ro"];
+
+  const { data: session } = useSession();
+  if (!adminEmails.includes(session?.user?.email)) {
+    return (
+      <>
+        <div
+          style={{
+            width: " 100%",
+            height: "100vh",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            fontWeight: "bold",
+            color: "red",
+          }}
+        >
+          n-ai voie
+        </div>
+      </>
+    );
+  }
   return (
     <>
       <Header />
@@ -57,7 +177,7 @@ const dashboard = ({ ASD }) => {
                 difference={12}
                 positive
                 sx={{ height: "100%" }}
-                value="$24k"
+                numberOfCommands={orders.length}
               />
             </Grid>
             <Grid xs={12} sm={6} lg={3}>
@@ -65,138 +185,42 @@ const dashboard = ({ ASD }) => {
                 difference={16}
                 positive={false}
                 sx={{ height: "100%" }}
-                value="1.6k"
+                value={JSON.stringify(clientNumber)}
               />
             </Grid>
             <Grid xs={12} sm={6} lg={3}>
-              <OverviewTasksProgress sx={{ height: "100%" }} value={75.5} />
+              <OverviewTasksProgress
+                sx={{ height: "100%" }}
+                value={productsNumber}
+              />
             </Grid>
             <Grid xs={12} sm={6} lg={3}>
-              <OverviewTotalProfit sx={{ height: "100%" }} value="$15k" />
+              <OverviewTotalProfit
+                sx={{ height: "100%" }}
+                value={`${totalProfit}$`}
+              />
             </Grid>
             <Grid xs={12} lg={8}>
               <OverviewSales
                 chartSeries={[
                   {
-                    name: "This year",
-                    data: [18, 16, 5, 8, 3, 14, 14, 16, 17, 19, 18, 20],
-                  },
-                  {
-                    name: "Last year",
-                    data: [12, 11, 4, 6, 2, 9, 9, 10, 11, 12, 13, 13],
+                    name: "Vanzari",
+                    data: monthlySales,
                   },
                 ]}
                 sx={{ height: "100%" }}
               />
             </Grid>
-            <Grid xs={12} md={6} lg={4}>
-              <OverviewTraffic
-                chartSeries={[63, 15, 22]}
-                labels={["Desktop", "Tablet", "Phone"]}
-                sx={{ height: "100%" }}
-              />
-            </Grid>
-            <Grid xs={12} md={6} lg={4}>
-              <OverviewLatestProducts
-                products={[
-                  {
-                    id: "5ece2c077e39da27658aa8a9",
-                    image: "/assets/products/product-1.png",
-                    name: "Healthcare Erbology",
-                    updatedAt: subHours(now, 6).getTime(),
-                  },
-                  {
-                    id: "5ece2c0d16f70bff2cf86cd8",
-                    image: "/assets/products/product-2.png",
-                    name: "Makeup Lancome Rouge",
-                    updatedAt: subDays(subHours(now, 8), 2).getTime(),
-                  },
-                  {
-                    id: "b393ce1b09c1254c3a92c827",
-                    image: "/assets/products/product-5.png",
-                    name: "Skincare Soja CO",
-                    updatedAt: subDays(subHours(now, 1), 1).getTime(),
-                  },
-                  {
-                    id: "a6ede15670da63f49f752c89",
-                    image: "/assets/products/product-6.png",
-                    name: "Makeup Lipstick",
-                    updatedAt: subDays(subHours(now, 3), 3).getTime(),
-                  },
-                  {
-                    id: "bcad5524fe3a2f8f8620ceda",
-                    image: "/assets/products/product-7.png",
-                    name: "Healthcare Ritual",
-                    updatedAt: subDays(subHours(now, 5), 6).getTime(),
-                  },
-                ]}
+
+            <Grid xs={12} md={12} lg={8}>
+              <OverviewLatestOrders
+                sells={PaymentsAudit}
                 sx={{ height: "100%" }}
               />
             </Grid>
             <Grid xs={12} md={12} lg={8}>
-              <OverviewLatestOrders
-                orders={[
-                  {
-                    id: "f69f88012978187a6c12897f",
-                    ref: "DEV1049",
-                    amount: 30.5,
-                    customer: {
-                      name: "Ekaterina Tankova",
-                    },
-                    createdAt: 1555016400000,
-                    status: "pending",
-                  },
-                  {
-                    id: "9eaa1c7dd4433f413c308ce2",
-                    ref: "DEV1048",
-                    amount: 25.1,
-                    customer: {
-                      name: "Cao Yu",
-                    },
-                    createdAt: 1555016400000,
-                    status: "delivered",
-                  },
-                  {
-                    id: "01a5230c811bd04996ce7c13",
-                    ref: "DEV1047",
-                    amount: 10.99,
-                    customer: {
-                      name: "Alexa Richardson",
-                    },
-                    createdAt: 1554930000000,
-                    status: "refunded",
-                  },
-                  {
-                    id: "1f4e1bd0a87cea23cdb83d18",
-                    ref: "DEV1046",
-                    amount: 96.43,
-                    customer: {
-                      name: "Anje Keizer",
-                    },
-                    createdAt: 1554757200000,
-                    status: "pending",
-                  },
-                  {
-                    id: "9f974f239d29ede969367103",
-                    ref: "DEV1045",
-                    amount: 32.54,
-                    customer: {
-                      name: "Clarke Gillebert",
-                    },
-                    createdAt: 1554670800000,
-                    status: "delivered",
-                  },
-                  {
-                    id: "ffc83c1560ec2f66a1c05596",
-                    ref: "DEV1044",
-                    amount: 16.76,
-                    customer: {
-                      name: "Adam Denisov",
-                    },
-                    createdAt: 1554670800000,
-                    status: "delivered",
-                  },
-                ]}
+              <OverviewLatestProducts
+                sells={AuditProducts}
                 sx={{ height: "100%" }}
               />
             </Grid>

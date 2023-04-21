@@ -16,7 +16,6 @@ import {
   TableRow,
 } from "@mui/material";
 import { Scrollbar } from "components/scrollbar";
-import { SeverityPill } from "components/severity-pill";
 
 const statusMap = {
   pending: "warning",
@@ -25,36 +24,30 @@ const statusMap = {
 };
 
 export const OverviewLatestOrders = (props) => {
-  const { orders = [], sx } = props;
+  const { sells = [], sx } = props;
 
   return (
     <Card sx={sx}>
-      <CardHeader title="Latest Orders" />
+      <CardHeader title="Latest sells" />
       <Scrollbar sx={{ flexGrow: 1 }}>
         <Box sx={{ minWidth: 800 }}>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Order</TableCell>
-                <TableCell>Customer</TableCell>
-                <TableCell sortDirection="desc">Date</TableCell>
-                <TableCell>Status</TableCell>
+                <TableCell>An</TableCell>
+                <TableCell>Luna</TableCell>
+                <TableCell sortDirection="desc">valoare totala</TableCell>
+                <TableCell>numar comenzi</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {orders.map((order) => {
-                const createdAt = format(order.createdAt, "dd/MM/yyyy");
-
+              {sells.map((Sell) => {
                 return (
-                  <TableRow hover key={order.id}>
-                    <TableCell>{order.ref}</TableCell>
-                    <TableCell>{order.customer.name}</TableCell>
-                    <TableCell>{createdAt}</TableCell>
-                    <TableCell>
-                      <SeverityPill color={statusMap[order.status]}>
-                        {order.status}
-                      </SeverityPill>
-                    </TableCell>
+                  <TableRow hover key={Sell.id}>
+                    <TableCell>{Sell.year}</TableCell>
+                    <TableCell>{Sell.month}</TableCell>
+                    <TableCell>{Sell.valTot}</TableCell>
+                    <TableCell>{Sell.nrComenzi}</TableCell>
                   </TableRow>
                 );
               })}
@@ -82,6 +75,6 @@ export const OverviewLatestOrders = (props) => {
 };
 
 OverviewLatestOrders.prototype = {
-  orders: PropTypes.array,
+  sells: PropTypes.array,
   sx: PropTypes.object,
 };

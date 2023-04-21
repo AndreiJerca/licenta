@@ -1,7 +1,6 @@
-import { formatDistanceToNow } from 'date-fns';
-import PropTypes from 'prop-types';
-import ArrowRightIcon from '@heroicons/react/24/solid/ArrowRightIcon';
-import EllipsisVerticalIcon from '@heroicons/react/24/solid/EllipsisVerticalIcon';
+import { format } from "date-fns";
+import PropTypes from "prop-types";
+import ArrowRightIcon from "@heroicons/react/24/solid/ArrowRightIcon";
 import {
   Box,
   Button,
@@ -9,80 +8,60 @@ import {
   CardActions,
   CardHeader,
   Divider,
-  IconButton,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  SvgIcon
-} from '@mui/material';
+  SvgIcon,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+} from "@mui/material";
+import { Scrollbar } from "components/scrollbar";
+
+const statusMap = {
+  pending: "warning",
+  delivered: "success",
+  refunded: "error",
+};
 
 export const OverviewLatestProducts = (props) => {
-  const { products = [], sx } = props;
+  const { sells = [], sx } = props;
 
   return (
     <Card sx={sx}>
-      <CardHeader title="Latest Products" />
-      <List>
-        {products.map((product, index) => {
-          const hasDivider = index < products.length - 1;
-          const ago = formatDistanceToNow(product.updatedAt);
-
-          return (
-            <ListItem
-              divider={hasDivider}
-              key={product.id}
-            >
-              <ListItemAvatar>
-                {
-                  product.image
-                    ? (
-                      <Box
-                        component="img"
-                        src={product.image}
-                        sx={{
-                          borderRadius: 1,
-                          height: 48,
-                          width: 48
-                        }}
-                      />
-                    )
-                    : (
-                      <Box
-                        sx={{
-                          borderRadius: 1,
-                          backgroundColor: 'neutral.200',
-                          height: 48,
-                          width: 48
-                        }}
-                      />
-                    )
-                }
-              </ListItemAvatar>
-              <ListItemText
-                primary={product.name}
-                primaryTypographyProps={{ variant: 'subtitle1' }}
-                secondary={`Updated ${ago} ago`}
-                secondaryTypographyProps={{ variant: 'body2' }}
-              />
-              <IconButton edge="end">
-                <SvgIcon>
-                  <EllipsisVerticalIcon />
-                </SvgIcon>
-              </IconButton>
-            </ListItem>
-          );
-        })}
-      </List>
+      <CardHeader title="Latest sells" />
+      <Scrollbar sx={{ flexGrow: 1 }}>
+        <Box sx={{ minWidth: 800 }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Nume produs</TableCell>
+                <TableCell>Numar comenzi</TableCell>
+                <TableCell sortDirection="desc">valoare totala</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {sells.map((Sell) => {
+                return (
+                  <TableRow hover key={Sell.id}>
+                    <TableCell>{Sell.numeProdus}</TableCell>
+                    <TableCell>{Sell.nrComenzi}</TableCell>
+                    <TableCell>{Sell.valTotala}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </Box>
+      </Scrollbar>
       <Divider />
-      <CardActions sx={{ justifyContent: 'flex-end' }}>
+      <CardActions sx={{ justifyContent: "flex-end" }}>
         <Button
           color="inherit"
-          endIcon={(
+          endIcon={
             <SvgIcon fontSize="small">
               <ArrowRightIcon />
             </SvgIcon>
-          )}
+          }
           size="small"
           variant="text"
         >
@@ -93,7 +72,7 @@ export const OverviewLatestProducts = (props) => {
   );
 };
 
-OverviewLatestProducts.propTypes = {
-  products: PropTypes.array,
-  sx: PropTypes.object
+OverviewLatestProducts.prototype = {
+  sells: PropTypes.array,
+  sx: PropTypes.object,
 };
