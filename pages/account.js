@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import styled from "styled-components";
 import Header from "@/components/Header";
 import { useSession } from "next-auth/react";
@@ -27,19 +28,31 @@ const Values = styled.div`
   justify-content: start;
 `;
 export default function OrdersPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") router.push("/");
+    console.log("ACCOUNT PAGE RENDERED");
+  }, [status, router]);
   return (
     <>
       <Header />
       <Box>
-        <Labels>
-          <div>Nume:</div>
-          <div>Email:</div>
-        </Labels>
-        <Values>
-          <div> {session.user.name}</div>
-          <div> {session.user.email}</div>
-        </Values>
+        {status === "authenticated" ? (
+          <>
+            <Labels>
+              <div>Nume:</div>
+              <div>Email:</div>
+            </Labels>
+            <Values>
+              <div> {session.user.name}</div>
+              <div> {session.user.email}</div>
+            </Values>
+          </>
+        ) : (
+          <div>Nu esti autentificat</div>
+        )}
       </Box>
     </>
   );
