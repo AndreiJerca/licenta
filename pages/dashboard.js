@@ -101,13 +101,29 @@ export async function getServerSideProps() {
     // a must be equal to b
     return 0;
   });
-  const AuditProducts = [
-    {
-      numeProdus: "numero produs",
-      nrComenzi: "numero prod",
-      valTotala: 1290,
-    },
-  ];
+  //Mapam toate comenzile pentru a afla de cate ori a fost comandat un produs in ultima perioada
+  const getCountByProduct = (title) => {
+    let count = 0;
+    orders.map((order) => {
+      order?.line_items.forEach((lineItem) => {
+        if (lineItem.price_data?.product_data?.name === title)
+          count += lineItem?.quantity;
+      });
+    });
+    return count;
+  };
+  const mappedProducts = products.filter(
+    (product) => getCountByProduct(product?.title) !== 0
+  );
+  console.log(mappedProducts);
+  const AuditProducts = mappedProducts.map((prod) => {
+    let count = getCountByProduct(prod?.title);
+    return {
+      numeProdus: prod?.title,
+      nrComenzi: count,
+      valTotala: count * prod?.price,
+    };
+  });
   return {
     props: {
       users: JSON.parse(JSON.stringify(users)),
@@ -136,7 +152,7 @@ const dashboard = ({
 }) => {
   // console.log(users);
   // console.log(orders);
-  console.log(balanceTransactions);
+  //console.log(balanceTransactions);
   // console.log();
   const adminEmails = ["andrei.jerca00@e-uvt.ro"];
 
