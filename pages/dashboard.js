@@ -1,5 +1,3 @@
-import Head from "next/head";
-import { subDays, subHours } from "date-fns";
 import { Box, Container, Unstable_Grid2 as Grid } from "@mui/material";
 import { OverviewBudget } from "sections/overview/overview-budget";
 import { OverviewLatestOrders } from "sections/overview/overview-latest-orders";
@@ -139,7 +137,7 @@ export async function getServerSideProps() {
   };
 }
 
-const dashboard = ({
+const Dashboard = ({
   users,
   orders,
   balanceTransactions,
@@ -247,4 +245,4 @@ const dashboard = ({
   );
 };
 
-export default dashboard;
+export default Dashboard;
