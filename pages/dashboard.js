@@ -88,15 +88,14 @@ export async function getServerSideProps() {
     return { ...el, valTot: Math.round(el.valTot * 100) / 100 };
   });
   PaymentsAudit.sort((a, b) => {
-    // a is less than b by some ordering criterion
     if (a.year < b.year || (a.year == b.year && a.month < b.month)) {
       return -1;
     }
-    // a is greater than b by the ordering criterion
+
     if (a.year > b.year || (a.year == b.year && a.month > b.month)) {
       return 1;
     }
-    // a must be equal to b
+
     return 0;
   });
   //Mapam toate comenzile pentru a afla de cate ori a fost comandat un produs in ultima perioada
@@ -113,15 +112,18 @@ export async function getServerSideProps() {
   const mappedProducts = products.filter(
     (product) => getCountByProduct(product?.title) !== 0
   );
-  console.log(mappedProducts);
-  const AuditProducts = mappedProducts.map((prod) => {
-    let count = getCountByProduct(prod?.title);
-    return {
-      numeProdus: prod?.title,
-      nrComenzi: count,
-      valTotala: count * prod?.price,
-    };
-  });
+  // console.log(mappedProducts);
+  const AuditProducts = mappedProducts
+    .slice(0)
+    .reverse()
+    .map((prod) => {
+      let count = getCountByProduct(prod?.title);
+      return {
+        numeProdus: prod?.title,
+        nrComenzi: count,
+        valTotala: count * prod?.price,
+      };
+    });
   return {
     props: {
       users: JSON.parse(JSON.stringify(users)),

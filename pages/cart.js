@@ -112,7 +112,7 @@ export default function CartPage() {
       cartProducts,
     });
     if (response.data.url) {
-      // clearCart();
+      clearCart();
       window.location = response.data.url;
     }
   }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Head from "next/head";
 import styled from "styled-components";
 import Header from "@/components/Header";
 import { useSession } from "next-auth/react";
@@ -37,6 +38,10 @@ export default function OrdersPage() {
   }, [status, router]);
   return (
     <>
+      <Head>
+        <title>Account</title>
+        <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+      </Head>
       <Header />
       <Box>
         {status === "authenticated" ? (

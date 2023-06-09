@@ -1,3 +1,4 @@
+import Head from "next/head";
 import Header from "@/components/Header";
 import Featured from "@/components/Featured";
 import { Product } from "@/models/Product";
@@ -7,6 +8,10 @@ import NewProducts from "@/components/NewProducts";
 export default function HomePage({ featuredProduct, newProducts }) {
   return (
     <div>
+      <Head>
+        <title>Home</title>
+        <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+      </Head>
       <Header />
       <Featured product={featuredProduct} />
       <NewProducts products={newProducts} />
@@ -15,7 +20,7 @@ export default function HomePage({ featuredProduct, newProducts }) {
 }
 
 export async function getServerSideProps() {
-  const featuredProductId = "643ecb29a75cae659bcb859e";
+  const featuredProductId = "643ecb76a75cae659bcb85e2";
   await mongooseConnect();
   const featuredProduct = await Product.findById(featuredProductId);
   const newProducts = await Product.find({}, null, {
